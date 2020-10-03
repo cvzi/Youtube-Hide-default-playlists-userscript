@@ -6,7 +6,6 @@
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
 // @icon         https://www.youtube.com/s/desktop/b4620429/img/favicon_144.png
-// @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @license      MIT
 // @match        https://www.youtube.com/*
 // @grant        GM.registerMenuCommand
