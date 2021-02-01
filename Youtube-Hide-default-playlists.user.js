@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.0
+// @version      1.1
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -17,8 +17,9 @@
 (function () {
   'use strict'
 
-  var hide = ['history', 'your_videos', 'watch_later', 'liked_videos']
-  var alwaysShowMore = false
+  let hide = ['history', 'your_videos', 'watch_later', 'liked_videos']
+  let alwaysShowMore = false
+  let sortingEnabled = false
   const icons = {
     history: 'M11.75c-4-8.7-8.25H.92l3.57.133-3H5c0',
     your_videos: 'M18.6v12H5V5h12zm0-1H5a1.8000-1.8v12',
@@ -30,8 +31,9 @@
   }
   const allAvailable = ['library', 'history', 'your_videos', 'watch_later', 'liked_videos']
   const titles = { library: 'Library' }
-  var showReloadAlready = false
+  let showReloadAlready = false
   let firstRun = true
+  let firstRunSorting = true
 
   function getPlaylistType (icon) {
     const s = icon.querySelector('path').getAttribute('d').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
@@ -62,10 +64,12 @@
   function loadHide () {
     return Promise.all([
       GM.getValue('hide', hide.join(',')),
-      GM.getValue('alwaysShowMore', alwaysShowMore)
+      GM.getValue('alwaysShowMore', alwaysShowMore),
+      GM.getValue('sortingEnabled', sortingEnabled)
     ]).then(function allPromisesLoaded (values) {
       hide = values[0].split(',')
       alwaysShowMore = values[1]
+      sortingEnabled = values[2]
     })
   }
 
@@ -81,10 +85,13 @@
   }
 
   function toggleAlwaysShowMore (yes) {
-    return loadHide().then(function () {
-      alwaysShowMore = !!yes
-      return GM.setValue('alwaysShowMore', alwaysShowMore)
-    })
+    alwaysShowMore = !!yes
+    return GM.setValue('alwaysShowMore', alwaysShowMore)
+  }
+
+  function toggleSorting (yes) {
+    sortingEnabled = !!yes
+    return GM.setValue('sortingEnabled', sortingEnabled)
   }
 
   function showReload () {
@@ -147,9 +154,56 @@
     }
   }
 
+  function sortPlaylists () {
+    if (firstRunSorting) {
+      if (sortingEnabled) {
+        GM.registerMenuCommand('Disable "Sort playlists"', () => toggleSorting(false).then(showReload))
+      } else {
+        GM.registerMenuCommand('Enable "Sort playlists"', () => toggleSorting(true).then(showReload))
+      }
+      firstRunSorting = false
+    }
+
+    if (!sortingEnabled) {
+      return
+    }
+
+    const headerLibraryA = document.querySelector('#sections ytd-guide-collapsible-section-entry-renderer #header a[href="/feed/library"]')
+    if (headerLibraryA) {
+      const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
+      const entries = []
+      let showMore = null
+      sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
+        const type = getPlaylistType(entryRenderer)
+        if (type.startsWith('custom_')) {
+          const titleNode = entryRenderer.querySelector('.title')
+          if (titleNode && titleNode.textContent) {
+            const title = titleNode.textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
+            entries.push({ entryRenderer: entryRenderer, title: title })
+          }
+        } else if (type === 'show_more') {
+          showMore = entryRenderer
+        }
+      })
+      entries.sort((a, b) => a.title.localeCompare(b.title))
+      entries.forEach(function (entry) {
+        entries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
+      })
+      if (showMore) {
+        showMore.parentNode.parentNode.appendChild(showMore.parentNode)
+      }
+    }
+  }
+
   loadHide().then(function () {
     hidePlaylists()
     window.setTimeout(hidePlaylists, 200)
     window.setInterval(hidePlaylists, 1000)
+    sortPlaylists()
+    if (sortingEnabled) {
+      window.setInterval(sortPlaylists, 3000)
+    } else {
+      window.setInterval(sortPlaylists, 30000)
+    }
   })
 })()
