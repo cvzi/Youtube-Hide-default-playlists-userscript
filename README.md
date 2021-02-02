@@ -1,6 +1,11 @@
 # Youtube - Hide default playlists
 Hide the default playlists in the navigation on the left side of Youtube
 
+The following features can be enabled in the Tampermonkey menu:
+*   Hide default playlists
+*   Auto show all playlists
+*   Sort playlists alphabetically
+
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 This is a userscript for your browser. It's primarily designed for Firefox and Chrome with

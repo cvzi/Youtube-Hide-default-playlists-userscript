@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.1
+// @version      1.2
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -155,23 +155,24 @@
   }
 
   function sortPlaylists () {
+    if (document.hidden) {
+      return
+    }
+
     if (firstRunSorting) {
+      firstRunSorting = false
       if (sortingEnabled) {
         GM.registerMenuCommand('Disable "Sort playlists"', () => toggleSorting(false).then(showReload))
       } else {
         GM.registerMenuCommand('Enable "Sort playlists"', () => toggleSorting(true).then(showReload))
+        return
       }
-      firstRunSorting = false
-    }
-
-    if (!sortingEnabled) {
-      return
     }
 
     const headerLibraryA = document.querySelector('#sections ytd-guide-collapsible-section-entry-renderer #header a[href="/feed/library"]')
     if (headerLibraryA) {
       const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
-      const entries = []
+      const guideEntries = []
       let showMore = null
       sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
         const type = getPlaylistType(entryRenderer)
@@ -179,19 +180,31 @@
           const titleNode = entryRenderer.querySelector('.title')
           if (titleNode && titleNode.textContent) {
             const title = titleNode.textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
-            entries.push({ entryRenderer: entryRenderer, title: title })
+            guideEntries.push({ entryRenderer: entryRenderer, title: title })
           }
         } else if (type === 'show_more') {
           showMore = entryRenderer
         }
       })
-      entries.sort((a, b) => a.title.localeCompare(b.title))
-      entries.forEach(function (entry) {
-        entries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
+      guideEntries.sort((a, b) => a.title.localeCompare(b.title))
+      guideEntries.forEach(function (entry) {
+        guideEntries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
       })
       if (showMore) {
         showMore.parentNode.parentNode.appendChild(showMore.parentNode)
       }
+    }
+
+    if (document.querySelector('ytd-add-to-playlist-renderer ytd-playlist-add-to-option-renderer')) {
+      const addToPlaylistEntries = []
+      document.querySelectorAll('ytd-add-to-playlist-renderer ytd-playlist-add-to-option-renderer').forEach(function (renderer) {
+        const title = renderer.querySelector('yt-formatted-string').textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
+        addToPlaylistEntries.push({ entryRenderer: renderer, title: title })
+      })
+      addToPlaylistEntries.sort((a, b) => a.title.localeCompare(b.title))
+      addToPlaylistEntries.forEach(function (entry) {
+        addToPlaylistEntries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
+      })
     }
   }
 
@@ -199,9 +212,10 @@
     hidePlaylists()
     window.setTimeout(hidePlaylists, 200)
     window.setInterval(hidePlaylists, 1000)
+
     sortPlaylists()
     if (sortingEnabled) {
-      window.setInterval(sortPlaylists, 3000)
+      window.setInterval(sortPlaylists, 2000)
     } else {
       window.setInterval(sortPlaylists, 30000)
     }
