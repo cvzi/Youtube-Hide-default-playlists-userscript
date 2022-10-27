@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.2
+// @version      1.3
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -21,13 +21,14 @@
   let alwaysShowMore = false
   let sortingEnabled = false
   const icons = {
-    history: 'M11.75c-4-8.7-8.25H.92l3.57.133-3H5c0',
-    your_videos: 'M18.6v12H5V5h12zm0-1H5a1.8000-1.8v12',
-    watch_later: 'M123c-4-8.75-8.33s3.338.338-3.33-8S16.67123zm3.8',
-    liked_videos: 'M3.75h3v-9h-3v9zm16-8c0-.83-.68-1-1-1h-4l.7-3.03-.24c0-.3-.13-.6-.33-.',
-    show_more: 'M16.59L1213.418l666-6z',
-    show_less: 'M128l-661.41L1210l4.58L1814z',
-    custom_playlist: 'M3.67h14V11h-14V8zm0-4h14v2h-1'
+    history: 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4',
+    your_videos: 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h16V4z',
+    watch_later: 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9s9-4,9-9S16,3,12',
+    download: 'M1718V19H6V18H17ZM16.4L15.7L1214V4H11V14L7.6L6.3L11.3L16.4Z',
+    liked_videos: 'M18,11h-4l1-4C16,5,15,4,14,4c-0,0-1,0-1,0L7,11H3v10h4h1h9c1',
+    show_more: 'M12,15L5,9l0-0l5,5l5-5l0,0L12,15z',
+    show_less: '18,14,8.6,14.4,15,9.6,15',
+    custom_playlist: 'M22,7H2v1h20V7zM13,12H2v-1h11V12zM13,16H2v-1h11V16zM15,19v-8l7,4L15,19z'
   }
   const allAvailable = ['library', 'history', 'your_videos', 'watch_later', 'liked_videos']
   const titles = { library: 'Library' }
@@ -36,13 +37,25 @@
   let firstRunSorting = true
 
   function getPlaylistType (icon) {
-    const s = icon.querySelector('path').getAttribute('d').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
-    for (const key in icons) {
-      if (s.startsWith(icons[key])) {
-        return key
+    if (icon.querySelector('path')) {
+      const s = icon.querySelector('path').getAttribute('d').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
+      for (const key in icons) {
+        if (s.startsWith(icons[key])) {
+          return key
+        }
       }
+      return 'custom_unknown_playlist:' + s
+    } else if (icon.querySelector('polygon')) {
+      const s = icon.querySelector('polygon').getAttribute('points').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
+      for (const key in icons) {
+        if (s.startsWith(icons[key])) {
+          return key
+        }
+      }
+      return 'custom_unknown_playlist:' + s
+    } else {
+      return 'unexpanded_section'
     }
-    return 'custom_unknown_playlist:' + s
   }
 
   function parentQuery (node, q) {
@@ -103,10 +116,10 @@
   }
 
   function hidePlaylists () {
-    const headerLibraryA = document.querySelector('#sections ytd-guide-collapsible-section-entry-renderer #header a[href="/feed/library"]')
+    const headerLibraryA = document.querySelector('#guide-inner-content a[href="/feed/library"]')
     if (headerLibraryA) {
       if (hide.indexOf('library') !== -1) {
-        parentQuery(headerLibraryA, '#header').style.display = 'none'
+        parentQuery(headerLibraryA, '#guide-inner-content').style.display = 'none'
       }
       const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
       sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
@@ -169,7 +182,7 @@
       }
     }
 
-    const headerLibraryA = document.querySelector('#sections ytd-guide-collapsible-section-entry-renderer #header a[href="/feed/library"]')
+    const headerLibraryA = document.querySelector('#guide-inner-content a[href="/feed/library"]')
     if (headerLibraryA) {
       const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
       const guideEntries = []
