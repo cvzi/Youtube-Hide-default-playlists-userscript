@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.3
+// @version      1.4
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -21,6 +21,7 @@
   let alwaysShowMore = false
   let sortingEnabled = false
   const icons = {
+    library: 'M11,7l6,3.5L11,14V7L11,7zM18,20H4V6H3v15h15',
     history: 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4',
     your_videos: 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h16V4z',
     watch_later: 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9s9-4,9-9S16,3,12',
@@ -119,7 +120,7 @@
     const headerLibraryA = document.querySelector('#guide-inner-content a[href="/feed/library"]')
     if (headerLibraryA) {
       if (hide.indexOf('library') !== -1) {
-        parentQuery(headerLibraryA, '#guide-inner-content').style.display = 'none'
+        parentQuery(headerLibraryA, 'ytd-guide-entry-renderer').style.display = 'none'
       }
       const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
       sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
@@ -193,7 +194,7 @@
           const titleNode = entryRenderer.querySelector('.title')
           if (titleNode && titleNode.textContent) {
             const title = titleNode.textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
-            guideEntries.push({ entryRenderer: entryRenderer, title: title })
+            guideEntries.push({ entryRenderer, title })
           }
         } else if (type === 'show_more') {
           showMore = entryRenderer
@@ -212,7 +213,7 @@
       const addToPlaylistEntries = []
       document.querySelectorAll('ytd-add-to-playlist-renderer ytd-playlist-add-to-option-renderer').forEach(function (renderer) {
         const title = renderer.querySelector('yt-formatted-string').textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
-        addToPlaylistEntries.push({ entryRenderer: renderer, title: title })
+        addToPlaylistEntries.push({ entryRenderer: renderer, title })
       })
       addToPlaylistEntries.sort((a, b) => a.title.localeCompare(b.title))
       addToPlaylistEntries.forEach(function (entry) {
