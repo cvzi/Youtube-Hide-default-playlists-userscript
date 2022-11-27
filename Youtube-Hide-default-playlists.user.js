@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.4
+// @version      1.5
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -24,6 +24,7 @@
     library: 'M11,7l6,3.5L11,14V7L11,7zM18,20H4V6H3v15h15',
     history: 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4',
     your_videos: 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h16V4z',
+    your_movies: 'M4,21H3V3h1V21zM8,15H6v2h2V15zM8,11H6v2h2V11zM8,7H6v2h2V7z',
     watch_later: 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9s9-4,9-9S16,3,12',
     download: 'M1718V19H6V18H17ZM16.4L15.7L1214V4H11V14L7.6L6.3L11.3L16.4Z',
     liked_videos: 'M18,11h-4l1-4C16,5,15,4,14,4c-0,0-1,0-1,0L7,11H3v10h4h1h9c1',
@@ -31,7 +32,7 @@
     show_less: '18,14,8.6,14.4,15,9.6,15',
     custom_playlist: 'M22,7H2v1h20V7zM13,12H2v-1h11V12zM13,16H2v-1h11V16zM15,19v-8l7,4L15,19z'
   }
-  const allAvailable = ['library', 'history', 'your_videos', 'watch_later', 'liked_videos']
+  const allAvailable = ['library', 'history', 'your_videos', 'your_movies', 'watch_later', 'liked_videos']
   const titles = { library: 'Library' }
   let showReloadAlready = false
   let firstRun = true
