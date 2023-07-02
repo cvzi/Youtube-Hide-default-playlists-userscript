@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.6
+// @version      1.7
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -21,16 +21,16 @@
   let alwaysShowMore = false
   let sortingEnabled = false
   const icons = {
-    library: 'M11,7l6,3.5L11,14V7L11,7zM18,20H4V6H3v15h15',
-    history: 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4',
-    your_videos: 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h16V4z',
-    your_movies: 'M22,4l-0-2L1,5L2,8v13h20V8H3L22,4zM5',
-    watch_later: 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9s9-4,9-9S16,3,12',
-    download: 'M1718V19H6V18H17ZM16.4L15.7L1214V4H11V14L7.6L6.3L11.3L16.4Z',
-    liked_videos: 'M18,11h-4l1-4C16,5,15,4,14,4c-0,0-1,0-1,0L7,11H3v10h4h1h9c1',
-    show_more: 'M12,15L5,9l0-0l5,5l5-5l0,0L12,15z',
-    show_less: '18,14,8.6,14.4,15,9.6,15',
-    custom_playlist: 'M22,7H2v1h20V7zM13,12H2v-1h11V12zM13,16H2v-1h11V16zM15,19v-8'
+    library: ['m11763-63V7zm713H4V6H3v15h15v-1zm3-2H6V3h15v15zM717h13V4H7v13z'],
+    history: ['/feed/history', 'M14.951013V7h2v5l4.49-1.7zM2212c05-4-1010S217h1c04.04999', 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4,10-10,10S2,17,2,12h1c'],
+    your_videos: ['https://studio.youtube.com/channel/', 'm10864-64V8zm11-5v18H3V3h18zm-11H4v16h16V4', 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h'],
+    your_movies: ['/feed/storefront?bp=', 'm10864-64V8zm11-5v18H3V3h18zm-11H4v16h16V4z', 'M22,4l-0-2L1,5L2,8v13h20V8H3L22,4zM5,9l1,3h3L8,9h2l1,3'],
+    watch_later: ['/playlist?list=WL', 'M14.951013V7h2v5l4.49-1.7zM123c-4-94-99s4-4-9-4-9-9-9m0-1c5', 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9'],
+    download: ['/feed/downloads', 'M1718v1H6v-1h11zm-.5-6-.7-.7-3.7V4h-1v10l-3-3-.7-4z', 'M1718V19H6V18H17ZM16.4L15.7L1214V4H11V14L7.6L6.3L11.3L16.4Z'],
+    liked_videos: ['M18,11h-4l1-4C16,5,15,4,14,4c-0,0-1,0-1,0L7,11H3v10h4h1h9c1'],
+    show_more: ['m189-6.35-6-6.72-.715.655-5z', 'M12,15L5,9l0-0l5,5l5-5l0,0L12,15z'],
+    show_less: ['M18.6128l-6.3.8L129l5.7z', '18,14,8.6,14.4,15,9.6,15'],
+    custom_playlist: ['M227H2v1h20V7zm-95H2v-1h11v1zm04H2v-1h11v1zm23v-8l74-74z', 'M22,7H2v1h20V7zM13,12H2v-1h11V']
   }
   const allAvailable = ['library', 'history', 'your_videos', 'your_movies', 'watch_later', 'liked_videos']
   const titles = { library: 'Library' }
@@ -39,25 +39,38 @@
   let firstRunSorting = true
 
   function getPlaylistType (icon) {
+    if (icon.querySelector('a[href]')) {
+      const a = icon.querySelector('a[href]')
+      for (const key in icons) {
+        for (let i = 0; i < icons[key].length; i++) {
+          if (a.href.indexOf(icons[key][i]) !== -1) {
+            return key
+          }
+        }
+      }
+    }
     if (icon.querySelector('path')) {
       const s = icon.querySelector('path').getAttribute('d').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
       for (const key in icons) {
-        if (s.startsWith(icons[key])) {
-          return key
+        for (let i = 0; i < icons[key].length; i++) {
+          if (s.startsWith(icons[key][i])) {
+            return key
+          }
         }
       }
       return 'custom_unknown_playlist:' + s
     } else if (icon.querySelector('polygon')) {
       const s = icon.querySelector('polygon').getAttribute('points').replace(/\s+/g, '').replace(/(\d+)\.\d+/g, '$1')
       for (const key in icons) {
-        if (s.startsWith(icons[key])) {
-          return key
+        for (let i = 0; i < icons[key].length; i++) {
+          if (s.startsWith(icons[key][i])) {
+            return key
+          }
         }
       }
       return 'custom_unknown_playlist:' + s
-    } else {
-      return 'unexpanded_section'
     }
+    return 'unexpanded_section'
   }
 
   function parentQuery (node, q) {
