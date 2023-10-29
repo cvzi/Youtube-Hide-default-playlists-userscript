@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.7
+// @version      1.8
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -73,22 +73,6 @@
     return 'unexpanded_section'
   }
 
-  function parentQuery (node, q) {
-    const parents = [node.parentElement]
-    node = node.parentElement.parentElement
-    while (node) {
-      const lst = node.querySelectorAll(q)
-      for (let i = 0; i < lst.length; i++) {
-        if (parents.indexOf(lst[i]) !== -1) {
-          return lst[i]
-        }
-      }
-      parents.push(node)
-      node = node.parentElement
-    }
-    return null
-  }
-
   function loadHide () {
     return Promise.all([
       GM.getValue('hide', hide.join(',')),
@@ -131,53 +115,46 @@
   }
 
   function hidePlaylists () {
-    const headerLibraryA = document.querySelector('#guide-inner-content a[href="/feed/library"]')
-    if (headerLibraryA) {
-      if (hide.indexOf('library') !== -1) {
-        parentQuery(headerLibraryA, 'ytd-guide-entry-renderer').style.display = 'none'
+    document.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
+      const type = getPlaylistType(entryRenderer)
+      if (!(type in titles)) {
+        titles[type] = entryRenderer.textContent.trim()
       }
-      const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
-      sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
-        const type = getPlaylistType(entryRenderer)
-        if (!(type in titles)) {
-          titles[type] = entryRenderer.textContent.trim()
+      if (hide.indexOf(type) !== -1) {
+        entryRenderer.remove()
+      }
+      if ((type === 'show_more' || type === 'show_less') && !('addedClick' in entryRenderer.dataset)) {
+        entryRenderer.dataset.addedClick = 'yes'
+        entryRenderer.addEventListener('click', function () {
+          window.setTimeout(hidePlaylists, 50)
+          window.setTimeout(hidePlaylists, 250)
+          window.setTimeout(hidePlaylists, 500)
+        })
+      }
+      if (type === 'show_more' && alwaysShowMore && !('alwaysOpened' in entryRenderer.dataset)) {
+        entryRenderer.dataset.alwaysOpened = 'yes'
+        entryRenderer.click()
+      }
+    })
+    if (firstRun && document.querySelectorAll('#section-items ytd-guide-entry-renderer').length > 0) {
+      // Show config
+      firstRun = false
+      for (let i = 0; i < allAvailable.length; i++) {
+        const type = allAvailable[i]
+        if (type.startsWith('custom_') || type.startsWith('show_')) {
+          continue
         }
-        if (hide.indexOf(type) !== -1) {
-          entryRenderer.remove()
-        }
-        if ((type === 'show_more' || type === 'show_less') && !('addedClick' in entryRenderer.dataset)) {
-          entryRenderer.dataset.addedClick = 'yes'
-          entryRenderer.addEventListener('click', function () {
-            window.setTimeout(hidePlaylists, 50)
-            window.setTimeout(hidePlaylists, 250)
-            window.setTimeout(hidePlaylists, 500)
-          })
-        }
-        if (type === 'show_more' && alwaysShowMore && !('alwaysOpened' in entryRenderer.dataset)) {
-          entryRenderer.dataset.alwaysOpened = 'yes'
-          entryRenderer.click()
-        }
-      })
-      if (firstRun) {
-        // Show config
-        firstRun = false
-        for (let i = 0; i < allAvailable.length; i++) {
-          const type = allAvailable[i]
-          if (type.startsWith('custom_') || type.startsWith('show_')) {
-            continue
-          }
-          const title = type in titles ? titles[type] : type
-          if (hide.indexOf(type) === -1) {
-            GM.registerMenuCommand('Hide: ' + title, () => toggleHidePlaylist(type, true).then(showReload))
-          } else {
-            GM.registerMenuCommand('Show: ' + title, () => toggleHidePlaylist(type, false).then(showReload))
-          }
-        }
-        if (alwaysShowMore) {
-          GM.registerMenuCommand('Disable "Always show more"', () => toggleAlwaysShowMore(false).then(showReload))
+        const title = type in titles ? titles[type] : type
+        if (hide.indexOf(type) === -1) {
+          GM.registerMenuCommand('Hide: ' + title, () => toggleHidePlaylist(type, true).then(showReload))
         } else {
-          GM.registerMenuCommand('Enable "Always show more"', () => toggleAlwaysShowMore(true).then(showReload))
+          GM.registerMenuCommand('Show: ' + title, () => toggleHidePlaylist(type, false).then(showReload))
         }
+      }
+      if (alwaysShowMore) {
+        GM.registerMenuCommand('Disable "Always show more"', () => toggleAlwaysShowMore(false).then(showReload))
+      } else {
+        GM.registerMenuCommand('Enable "Always show more"', () => toggleAlwaysShowMore(true).then(showReload))
       }
     }
   }
@@ -197,30 +174,26 @@
       }
     }
 
-    const headerLibraryA = document.querySelector('#guide-inner-content a[href="/feed/library"]')
-    if (headerLibraryA) {
-      const sectionEntryRenderer = parentQuery(headerLibraryA, 'ytd-guide-collapsible-section-entry-renderer')
-      const guideEntries = []
-      let showMore = null
-      sectionEntryRenderer.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
-        const type = getPlaylistType(entryRenderer)
-        if (type.startsWith('custom_')) {
-          const titleNode = entryRenderer.querySelector('.title')
-          if (titleNode && titleNode.textContent) {
-            const title = titleNode.textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
-            guideEntries.push({ entryRenderer, title })
-          }
-        } else if (type === 'show_more') {
-          showMore = entryRenderer
+    const guideEntries = []
+    let showMore = null
+    document.querySelectorAll('#section-items ytd-guide-entry-renderer').forEach(function (entryRenderer) {
+      const type = getPlaylistType(entryRenderer)
+      if (type.startsWith('custom_')) {
+        const titleNode = entryRenderer.querySelector('.title')
+        if (titleNode && titleNode.textContent) {
+          const title = titleNode.textContent.toLowerCase().replace(/\d+/gm, s => s.padStart(10, '0'))
+          guideEntries.push({ entryRenderer, title })
         }
-      })
-      guideEntries.sort((a, b) => a.title.localeCompare(b.title))
-      guideEntries.forEach(function (entry) {
-        guideEntries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
-      })
-      if (showMore) {
-        showMore.parentNode.parentNode.appendChild(showMore.parentNode)
+      } else if (type === 'show_more') {
+        showMore = entryRenderer
       }
+    })
+    guideEntries.sort((a, b) => a.title.localeCompare(b.title))
+    guideEntries.forEach(function (entry) {
+      guideEntries[0].entryRenderer.parentNode.appendChild(entry.entryRenderer)
+    })
+    if (showMore) {
+      showMore.parentNode.parentNode.appendChild(showMore.parentNode)
     }
 
     if (document.querySelector('ytd-add-to-playlist-renderer ytd-playlist-add-to-option-renderer')) {
@@ -237,8 +210,6 @@
   }
 
   loadHide().then(function () {
-    hidePlaylists()
-    window.setTimeout(hidePlaylists, 200)
     window.setInterval(hidePlaylists, 1000)
 
     sortPlaylists()
