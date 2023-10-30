@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube - Hide default playlists
 // @description  Hide the default playlists in the navigation on the left side of Youtube
-// @version      1.8
+// @version      1.9
 // @namespace    https://openuserjs.org/users/cuzi
 // @author       cuzi
 // @copyright    2020, cuzi (https://openuserjs.org/users/cuzi)
@@ -23,6 +23,7 @@
   const icons = {
     library: ['m11763-63V7zm713H4V6H3v15h15v-1zm3-2H6V3h15v15zM717h13V4H7v13z'],
     history: ['/feed/history', 'M14.951013V7h2v5l4.49-1.7zM2212c05-4-1010S217h1c04.04999', 'M14,16L10,13V7h2v5l4,2L14,16zM22,12c0,5-4,10-10,10S2,17,2,12h1c'],
+    your_channel: ['/channel/', 'M3,3v18h18V3H3zM4,20c0-2,2-5,7-5s6,2,7,5H4zM9,10c0-1,1-3,3-3s3,1,3,3c0'],
     your_videos: ['https://studio.youtube.com/channel/', 'm10864-64V8zm11-5v18H3V3h18zm-11H4v16h16V4', 'M10,8l6,4l-6,4V8L10,8zM21,3v18H3V3H21zM20,4H4v16h'],
     your_movies: ['/feed/storefront?bp=', 'm10864-64V8zm11-5v18H3V3h18zm-11H4v16h16V4z', 'M22,4l-0-2L1,5L2,8v13h20V8H3L22,4zM5,9l1,3h3L8,9h2l1,3'],
     watch_later: ['/playlist?list=WL', 'M14.951013V7h2v5l4.49-1.7zM123c-4-94-99s4-4-9-4-9-9-9m0-1c5', 'M14,16L10,13V7h2v5l4,2L14,16zM12,3c-4,0-9,4-9,9s4,9,9,9'],
@@ -32,7 +33,7 @@
     show_less: ['M18.6128l-6.3.8L129l5.7z', '18,14,8.6,14.4,15,9.6,15'],
     custom_playlist: ['M227H2v1h20V7zm-95H2v-1h11v1zm04H2v-1h11v1zm23v-8l74-74z', 'M22,7H2v1h20V7zM13,12H2v-1h11V']
   }
-  const allAvailable = ['library', 'history', 'your_videos', 'your_movies', 'watch_later', 'liked_videos']
+  const allAvailable = ['library', 'history', 'your_channel', 'your_videos', 'your_movies', 'watch_later', 'liked_videos', 'download']
   const titles = { library: 'Library' }
   let showReloadAlready = false
   let firstRun = true
