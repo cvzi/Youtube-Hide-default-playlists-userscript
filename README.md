@@ -1,3 +1,5 @@
+# No longer maintained!
+
 # Youtube - Hide default playlists
 Hide the default playlists in the navigation on the left side of Youtube
 
